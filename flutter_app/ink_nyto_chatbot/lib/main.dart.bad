@@ -1,0 +1,120 @@
+import 'dart:async';
+import 'dart:convert';
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+
+void main() {
+  runApp(MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Ink Nyto Bot',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      home: ChatScreen(),
+    );
+  }
+}
+
+class ChatScreen extends StatefulWidget {
+  @override
+  _ChatScreenState createState() => _ChatScreenState();
+}
+
+class _ChatScreenState extends State<ChatScreen> {
+  final TextEditingController _textController = TextEditingController();
+  final List<String> _messages = [];
+  final _streamController = StreamController<String>.broadcast();
+
+  Future<void> _sendMessage(String message) async {
+    _messages.add('User: $message');
+    setState(() {});
+
+    try {
+      final response = await http.post(
+        Uri.parse('http://127.0.0.1:3000/send'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'message': message}),
+      );
+
+      if (response.statusCode == 200) {
+        final stream = response.body
+            .whereType<String>()
+            .where((line) => line.isNotEmpty)
+            .map((line) => 'Chatbot: $line');
+
+        _streamController.addStream(stream);
+      } else {
+        _messages.add('An error occurred during chatbot processing.');
+        setState(() {});
+      }
+    } catch (e) {
+      print('Error: $e');
+    }
+  }
+
+  @override
+  void dispose() {
+    _streamController.close();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Ink Nyto Bot'),
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            child: StreamBuilder<String>(
+              stream: _streamController.stream,
+              builder: (context, snapshot) {
+                if (snapshot.hasData) {
+                  _messages.add(snapshot.data!);
+                  return ListView.builder(
+                    itemCount: _messages.length,
+                    itemBuilder: (context, index) {
+                      return Text(_messages[index]);
+                    },
+                  );
+                } else if (snapshot.hasError) {
+                  return Text('Error: ${snapshot.error}');
+                } else {
+                  return Center(child: CircularProgressIndicator());
+                }
+              },
+            ),
+          ),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _textController,
+                  decoration: InputDecoration(
+                    hintText: 'It was a dark and stormy night...',
+                  ),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  final message = _textController.text.trim();
+                  if (message.isNotEmpty) {
+                    _textController.clear();
+                    _sendMessage(message);
+                  }
+                },
+                child: Text('Send'),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
