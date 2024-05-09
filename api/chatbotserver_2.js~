@@ -22,7 +22,7 @@ app.post('/send', async (req, res) => {
     res.setHeader('Connection', 'keep-alive');
 
     for await (const part of response) {
-      res.write(part.message.content);
+      res.write(`data: ${part.message.content}\n\n`);
     }
 
     res.end();

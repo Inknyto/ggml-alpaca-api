@@ -1,0 +1,71 @@
+import ollama from 'ollama'
+const express = require('express');
+// const bodyParser = require('body-parser');
+// const { spawn } = require('child_process');
+const cors = require('cors');
+
+
+
+
+const response = await ollama.chat({ model: 'llama2', messages: [message], stream: true })
+for await (const part of response) {
+  process.stdout.write(part.message.content)
+}
+
+
+
+const app = express();
+const PORT = 3000;
+
+// Spawn the ollama process with the llama2 model
+const chatbotProcess = spawn('/usr/local/bin/ollama', ['run', 'llama2']);
+console.log('Chatbot process spawned with PID:', chatbotProcess.pid);
+
+app.use(bodyParser.json());
+app.use(cors());
+
+app.get('/stream', (req, res) => {
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+
+  // Listen for chatbot responses and send them to the client in real time
+  chatbotProcess.stdout.on('data', (data) => {
+    const response = data.toString();
+    console.log('Chatbot response:', response);
+    res.write(`data: ${response}\n\n`); // Send the response as a chunk
+  });
+
+  chatbotProcess.stderr.on('data', (errData) => {
+    console.error('Chatbot error:', errData.toString());
+    // res.write(`data: An error occurred during chatbot processing.\n\n`);
+  });
+
+  // Listen for the 'close' event to finalize the response
+  chatbotProcess.on('close', (code, signal) => {
+    console.log('Chatbot process closed with code:', code, 'and signal:', signal);
+    res.end();
+  });
+});
+
+app.post('/send', (req, res) => {
+
+  console.log(req.body);
+  const userMessage = req.body.message;
+  const message = { role: 'user', content: req.body.message }
+
+  // Send user input to chatbot process's standard input
+  chatbotProcess.stdin.write(userMessage + '\n');
+
+  // Add error handling for stdin write errors
+  chatbotProcess.stdin.on('error', (err) => {
+    console.error('Error writing to chatbot process:', err);
+    // You can also send an error response to the client here
+  });
+
+  res.status(200).json({ message: 'User input sent to chatbot' });
+});
+
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Server is listening on port ${PORT}`);
+});
