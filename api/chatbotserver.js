@@ -1,6 +1,6 @@
 const express = require('express');
 const bodyParser = require('body-parser');
-import ollama from 'ollama'
+import ollama from 'ollama';
 const cors = require('cors');
 
 const app = express();

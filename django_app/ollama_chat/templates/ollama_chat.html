@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Ink Nyto Bot</title>
+    <style>
+        /* Add your CSS styles here */
+    </style>
+</head>
+<body>
+    <h1 class="banner">Ink Nyto Bot</h1>
+    <section>
+        <div id="output">
+            <!-- Display the conversation history here -->
+            {% for message in conversation %}
+                {% if message.from == 'user' %}
+                    <h3>User:</h3>
+                    <p>{{ message.text }}</p>
+                {% else %}
+                    <h3>Chatbot:</h3>
+                    <p>{{ message.text }}</p>
+                {% endif %}
+            {% endfor %}
+        </div>
+        <div class="input">
+            <form method="post">
+                {% csrf_token %}
+                <textarea id="userInput" name="user_input" rows="5" cols="110" placeholder="It was a dark and stormy night..."></textarea>
+                <button class="button-28" type="submit">Send</button>
+            </form>
+        </div>
+    </section>
+    <script>
+        // Add your JavaScript code here if needed
+    </script>
+</body>
+</html>

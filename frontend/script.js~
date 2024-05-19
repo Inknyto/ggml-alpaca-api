@@ -23,7 +23,6 @@ sendButton.addEventListener('click', async () => {
       if (done) break;
 
       const chunk = decoder.decode(value, { stream: true });
-	    console.log
       outputDiv.innerHTML += chunk
 //       for (const line of lines) {
 //         if (line.trim()) {

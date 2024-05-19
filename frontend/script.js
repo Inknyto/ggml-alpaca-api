@@ -8,7 +8,7 @@ sendButton.addEventListener('click', async () => {
 
   outputDiv.innerHTML += `<h3>User:</h3><p>${message}</p><h3>Chatbot:</h3>`;
 
-  const response = await fetch('http://127.0.0.1:3000/send', {
+  const response = await fetch('http://192.168.1.48:3000/send', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ message }),
